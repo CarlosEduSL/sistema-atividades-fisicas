@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+
+{% block title %}Sessões - Sistema de Atividades Físicas{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="bi bi-calendar-event me-2"></i>
+                Gerenciar Sessões
+            </h1>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalSessao">
+                <i class="bi bi-plus-circle me-2"></i>
+                Nova Sessão
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros Avançados -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="bi bi-funnel me-2"></i>
+            Filtros
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <label for="filtroAtividade" class="form-label">Atividade:</label>
+                <select id="filtroAtividade" class="form-select" onchange="filtrarSessoes()">
+                    <option value="">Todas as atividades</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="filtroIntensidade" class="form-label">Intensidade:</label>
+                <select id="filtroIntensidade" class="form-select" onchange="filtrarSessoes()">
+                    <option value="">Todas</option>
+                    <option value="baixa">Baixa</option>
+                    <option value="moderada">Moderada</option>
+                    <option value="alta">Alta</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="filtroDataInicio" class="form-label">Data Início:</label>
+                <input type="date" id="filtroDataInicio" class="form-control" onchange="filtrarSessoes()">
+            </div>
+            <div class="col-md-3">
+                <label for="filtroDataFim" class="form-label">Data Fim:</label>
+                <input type="date" id="filtroDataFim" class="form-control" onchange="filtrarSessoes()">
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12">
+                <button class="btn btn-outline-secondary btn-sm" onclick="limparFiltros()">
+                    <i class="bi bi-x-circle me-1"></i>
+                    Limpar Filtros
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Sessões -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Sessões Registradas</h5>
+        <span class="badge bg-success" id="contadorSessoes">0 sessões</span>
+    </div>
+    <div class="card-body">
+        <div id="listaSessoes">
+            <div class="text-center py-4">
+                <div class="spinner-border" role="status"></div>
+                <p class="mt-2">Carregando sessões...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Criar Sessão -->
+<div class="modal fade" id="modalSessao" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Registrar Nova Sessão
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formSessao">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="atividadeSessao" class="form-label">Atividade *</label>
+                                <select class="form-select" id="atividadeSessao" required>
+                                    <option value="">Selecione uma atividade</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="dataSessao" class="form-label">Data *</label>
+                                <input type="date" class="form-control" id="dataSessao" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="duracaoSessao" class="form-label">Duração (minutos) *</label>
+                                <input type="number" class="form-control" id="duracaoSessao" 
+                                       min="1" max="720" placeholder="Ex: 45" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="intensidadeSessao" class="form-label">Intensidade *</label>
+                                <select class="form-select" id="intensidadeSessao" required>
+                                    <option value="">Selecione</option>
+                                    <option value="baixa">Baixa</option>
+                                    <option value="moderada">Moderada</option>
+                                    <option value="alta">Alta</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="caloriasSessao" class="form-label">Calorias Queimadas</label>
+                        <input type="number" class="form-control" id="caloriasSessao" 
+                               min="0" placeholder="Ex: 300 (opcional)">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="observacoesSessao" class="form-label">Observações</label>
+                        <textarea class="form-control" id="observacoesSessao" rows="3" 
+                                  placeholder="Adicione suas observações sobre a sessão..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="salvarSessao()">
+                    <i class="bi bi-check-lg me-2"></i>
+                    Registrar Sessão
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="modalConfirmarExclusaoSessao" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir esta sessão?</p>
+                <div id="detalhesSessaoExcluir" class="bg-light p-3 rounded"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmarExclusaoSessao()">
+                    <i class="bi bi-trash me-2"></i>
+                    Excluir Sessão
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let sessoes = [];
+let atividades = [];
+let sessaoParaExcluir = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    carregarAtividades();
+    carregarSessoes();
+    
+    // Set default date to today
+    document.getElementById('dataSessao').valueAsDate = new Date();
+    
+    // Reset form when modal is hidden
+    document.getElementById('modalSessao').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('formSessao').reset();
+        document.getElementById('dataSessao').valueAsDate = new Date();
+    });
+});
+
+async function carregarAtividades() {
+    try {
+        const response = await fetch('/api/atividades');
+        atividades = await response.json();
+        
+        // Populate activity selects
+        const selects = ['atividadeSessao', 'filtroAtividade'];
+        selects.forEach(selectId => {
+            const select = document.getElementById(selectId);
+            const defaultOption = select.children[0];
+            select.innerHTML = '';
+            select.appendChild(defaultOption);
+            
+            atividades.forEach(atividade => {
+                const option = document.createElement('option');
+                option.value = atividade.id;
+                option.textContent = atividade.nome;
+                select.appendChild(option);
+            });
+        });
+    } catch (error) {
+        console.error('Erro ao carregar atividades:', error);
+        showToast('Erro ao carregar atividades', 'error');
+    }
+}
+
+async function carregarSessoes() {
+    try {
+        const response = await fetch('/api/sessoes');
+        sessoes = await response.json();
+        renderizarSessoes(sessoes);
+        atualizarContadorSessoes(sessoes.length);
+    } catch (error) {
+        console.error('Erro ao carregar sessões:', error);
+        showToast('Erro ao carregar sessões', 'error');
+    }
+}
+
+function renderizarSessoes(sessoesParaRenderizar) {
+    const container = document.getElementById('listaSessoes');
+    
+    if (sessoesParaRenderizar.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-calendar-x fa-3x text-muted d-block mb-3"></i>
+                <h5 class="text-muted">Nenhuma sessão encontrada</h5>
+                <p class="text-muted">Registre sua primeira sessão de treino!</p>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalSessao">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Registrar Sessão
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    // Group sessions by date
+    const sessoesPorData = {};
+    sessoesParaRenderizar.forEach(sessao => {
+        const data = new Date(sessao.data).toLocaleDateString('pt-BR');
+        if (!sessoesPorData[data]) {
+            sessoesPorData[data] = [];
+        }
+        sessoesPorData[data].push(sessao);
+    });
+    
+    container.innerHTML = Object.entries(sessoesPorData)
+        .sort(([a], [b]) => new Date(b.split('/').reverse().join('-')) - new Date(a.split('/').reverse().join('-')))
+        .map(([data, sessoesData]) => `
+            <div class="mb-4">
+                <h6 class="text-primary border-bottom pb-2">
+                    <i class="bi bi-calendar3 me-2"></i>
+                    ${data}
+                </h6>
+                ${sessoesData.map(sessao => `
+                    <div class="card mb-2">
+                        <div class="card-body py-3">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <h6 class="mb-0 me-3">${sessao.atividade.nome}</h6>
+                                        <span class="badge bg-${getIntensidadeCor(sessao.intensidade)}">${sessao.intensidade}</span>
+                                    </div>
+                                    <div class="text-muted small">
+                                        <i class="bi bi-clock me-1"></i>
+                                        ${sessao.duracao} minutos
+                                        ${sessao.calorias ? `<i class="bi bi-fire ms-3 me-1"></i>${sessao.calorias} kcal` : ''}
+                                    </div>
+                                    ${sessao.observacoes ? `
+                                        <div class="text-muted small mt-1">
+                                            <i class="bi bi-chat-left-text me-1"></i>
+                                            ${sessao.observacoes}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <button class="btn btn-outline-danger btn-sm" 
+                                            onclick="prepararExclusaoSessao(${sessao.id})"
+                                            title="Excluir sessão">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `).join('');
+}
+
+function filtrarSessoes() {
+    const atividade = document.getElementById('filtroAtividade').value;
+    const intensidade = document.getElementById('filtroIntensidade').value;
+    const dataInicio = document.getElementById('filtroDataInicio').value;
+    const dataFim = document.getElementById('filtroDataFim').value;
+    
+    let sessoesFiltradas = sessoes.filter(sessao => {
+        const matchAtividade = !atividade || sessao.atividade_id == atividade;
+        const matchIntensidade = !intensidade || sessao.intensidade === intensidade;
+        
+        let matchData = true;
+        if (dataInicio || dataFim) {
+            const dataSessao = new Date(sessao.data);
+            if (dataInicio) {
+                matchData = matchData && dataSessao >= new Date(dataInicio);
+            }
+            if (dataFim) {
+                matchData = matchData && dataSessao <= new Date(dataFim);
+            }
+        }
+        
+        return matchAtividade && matchIntensidade && matchData;
+    });
+    
+    renderizarSessoes(sessoesFiltradas);
+    atualizarContadorSessoes(sessoesFiltradas.length);
+}
+
+function limparFiltros() {
+    document.getElementById('filtroAtividade').value = '';
+    document.getElementById('filtroIntensidade').value = '';
+    document.getElementById('filtroDataInicio').value = '';
+    document.getElementById('filtroDataFim').value = '';
+    renderizarSessoes(sessoes);
+    atualizarContadorSessoes(sessoes.length);
+}
+
+function atualizarContadorSessoes(count) {
+    document.getElementById('contadorSessoes').textContent = 
+        `${count} ${count === 1 ? 'sessão' : 'sessões'}`;
+}
+
+async function salvarSessao() {
+    const atividade_id = parseInt(document.getElementById('atividadeSessao').value);
+    const data = document.getElementById('dataSessao').value;
+    const duracao = parseInt(document.getElementById('duracaoSessao').value);
+    const intensidade = document.getElementById('intensidadeSessao').value;
+    const calorias = document.getElementById('caloriasSessao').value;
+    const observacoes = document.getElementById('observacoesSessao').value.trim();
+    
+    // Validação
+    if (!atividade_id || !data || !duracao || !intensidade) {
+        showToast('Preencha todos os campos obrigatórios', 'error');
+        return;
+    }
+    
+    const dados = {
+        atividade_id,
+        data,
+        duracao,
+        intensidade,
+        observacoes
+    };
+    
+    if (calorias) {
+        dados.calorias = parseInt(calorias);
+    }
+    
+    try {
+        const response = await fetch('/api/sessoes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dados)
+        });
+        
+        if (response.ok) {
+            showToast('Sessão registrada com sucesso!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalSessao')).hide();
+            carregarSessoes();
+        } else {
+            const error = await response.json();
+            showToast(error.detail || 'Erro ao registrar sessão', 'error');
+        }
+    } catch (error) {
+        console.error('Erro ao registrar sessão:', error);
+        showToast('Erro ao registrar sessão', 'error');
+    }
+}
+
+function prepararExclusaoSessao(id) {
+    const sessao = sessoes.find(s => s.id === id);
+    if (!sessao) return;
+    
+    sessaoParaExcluir = id;
+    
+    document.getElementById('detalhesSessaoExcluir').innerHTML = `
+        <strong>${sessao.atividade.nome}</strong><br>
+        <small class="text-muted">
+            ${new Date(sessao.data).toLocaleDateString('pt-BR')} - 
+            ${sessao.duracao} min - 
+            ${sessao.intensidade}
+        </small>
+    `;
+    
+    new bootstrap.Modal(document.getElementById('modalConfirmarExclusaoSessao')).show();
+}
+
+async function confirmarExclusaoSessao() {
+    if (!sessaoParaExcluir) return;
+    
+    try {
+        const response = await fetch(`/api/sessoes/${sessaoParaExcluir}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            showToast('Sessão excluída com sucesso!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalConfirmarExclusaoSessao')).hide();
+            carregarSessoes();
+        } else {
+            const error = await response.json();
+            showToast(error.detail || 'Erro ao excluir sessão', 'error');
+        }
+    } catch (error) {
+        console.error('Erro ao excluir sessão:', error);
+        showToast('Erro ao excluir sessão', 'error');
+    }
+    
+    sessaoParaExcluir = null;
+}
+
+function getIntensidadeCor(intensidade) {
+    const cores = {
+        'baixa': 'success',
+        'moderada': 'warning', 
+        'alta': 'danger'
+    };
+    return cores[intensidade] || 'secondary';
+}
+</script>
+{% endblock %}

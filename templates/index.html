@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Sistema de Atividades Físicas{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="bi bi-speedometer2 me-2"></i>
+                Dashboard
+            </h1>
+            <div class="text-muted">
+                <i class="bi bi-calendar me-1"></i>
+                <span id="currentDate"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cards de Estatísticas -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total de Atividades</h6>
+                        <h3 class="mb-0" id="totalAtividades">-</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-list-task fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total de Sessões</h6>
+                        <h3 class="mb-0" id="totalSessoes">-</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-calendar-event fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Tempo Total</h6>
+                        <h3 class="mb-0" id="tempoTotal">-</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Calorias</h6>
+                        <h3 class="mb-0" id="totalCalorias">-</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-fire fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Atividades Recentes e Ações Rápidas -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history me-2"></i>
+                    Sessões Recentes
+                </h5>
+                <a href="/sessoes" class="btn btn-sm btn-outline-primary">Ver Todas</a>
+            </div>
+            <div class="card-body">
+                <div id="sessoesRecentes">
+                    <div class="text-center text-muted py-4">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        Carregando sessões...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightning me-2"></i>
+                    Ações Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/atividades" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Nova Atividade
+                    </a>
+                    <a href="/sessoes" class="btn btn-success">
+                        <i class="bi bi-play-circle me-2"></i>
+                        Registrar Sessão
+                    </a>
+                    <button class="btn btn-info" onclick="atualizarEstatisticas()">
+                        <i class="bi bi-arrow-clockwise me-2"></i>
+                        Atualizar Dados
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Atividades Populares -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-star me-2"></i>
+                    Atividades Populares
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="atividadesPopulares">
+                    <div class="text-center text-muted py-3">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        Carregando...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Exibir data atual
+    const agora = new Date();
+    document.getElementById('currentDate').textContent = agora.toLocaleDateString('pt-BR', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
+    // Carregar dados iniciais
+    carregarEstatisticas();
+    carregarSessoesRecentes();
+    carregarAtividadesPopulares();
+});
+
+async function carregarEstatisticas() {
+    try {
+        const response = await fetch('/api/estatisticas');
+        const stats = await response.json();
+        
+        document.getElementById('totalAtividades').textContent = stats.total_atividades || 0;
+        document.getElementById('totalSessoes').textContent = stats.total_sessoes || 0;
+        document.getElementById('tempoTotal').textContent = formatarTempo(stats.tempo_total || 0);
+        document.getElementById('totalCalorias').textContent = (stats.total_calorias || 0) + ' kcal';
+    } catch (error) {
+        console.error('Erro ao carregar estatísticas:', error);
+        showToast('Erro ao carregar estatísticas', 'error');
+    }
+}
+
+async function carregarSessoesRecentes() {
+    try {
+        const response = await fetch('/api/sessoes?limit=5');
+        const sessoes = await response.json();
+        const container = document.getElementById('sessoesRecentes');
+        
+        if (sessoes.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-calendar-x fa-2x d-block mb-2"></i>
+                    <p class="mb-0">Nenhuma sessão registrada ainda</p>
+                    <a href="/sessoes" class="btn btn-sm btn-primary mt-2">Registrar primeira sessão</a>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = sessoes.map(sessao => `
+            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <div>
+                    <strong>${sessao.atividade.nome}</strong>
+                    <div class="text-muted small">
+                        <i class="bi bi-calendar me-1"></i>
+                        ${new Date(sessao.data).toLocaleDateString('pt-BR')} - 
+                        ${sessao.duracao} min
+                    </div>
+                </div>
+                <span class="badge bg-${getIntensidadeCor(sessao.intensidade)}">
+                    ${sessao.intensidade}
+                </span>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Erro ao carregar sessões recentes:', error);
+        document.getElementById('sessoesRecentes').innerHTML = `
+            <div class="text-center text-danger py-4">
+                <i class="bi bi-exclamation-triangle fa-2x d-block mb-2"></i>
+                <p class="mb-0">Erro ao carregar sessões</p>
+            </div>
+        `;
+    }
+}
+
+async function carregarAtividadesPopulares() {
+    try {
+        const response = await fetch('/api/atividades');
+        const atividades = await response.json();
+        const container = document.getElementById('atividadesPopulares');
+        
+        if (atividades.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted">
+                    <i class="bi bi-list-ul"></i>
+                    <p class="mb-0 small">Nenhuma atividade cadastrada</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = atividades.slice(0, 5).map(atividade => `
+            <div class="d-flex justify-content-between align-items-center py-1">
+                <div>
+                    <div class="fw-bold small">${atividade.nome}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">${atividade.categoria}</div>
+                </div>
+                <span class="badge bg-light text-dark">${atividade.total_sessoes || 0}</span>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Erro ao carregar atividades populares:', error);
+    }
+}
+
+function atualizarEstatisticas() {
+    carregarEstatisticas();
+    carregarSessoesRecentes();
+    carregarAtividadesPopulares();
+    showToast('Dados atualizados com sucesso!', 'success');
+}
+
+function formatarTempo(minutos) {
+    if (minutos < 60) return `${minutos}min`;
+    const horas = Math.floor(minutos / 60);
+    const mins = minutos % 60;
+    return `${horas}h${mins > 0 ? ` ${mins}min` : ''}`;
+}
+
+function getIntensidadeCor(intensidade) {
+    const cores = {
+        'baixa': 'success',
+        'moderada': 'warning',
+        'alta': 'danger'
+    };
+    return cores[intensidade] || 'secondary';
+}
+</script>
+{% endblock %}

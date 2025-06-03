@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}Atividades - Sistema de Atividades Físicas{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="bi bi-list-task me-2"></i>
+                Gerenciar Atividades
+            </h1>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAtividade">
+                <i class="bi bi-plus-circle me-2"></i>
+                Nova Atividade
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <label for="filtroCategoria" class="form-label">Filtrar por Categoria:</label>
+                <select id="filtroCategoria" class="form-select" onchange="filtrarAtividades()">
+                    <option value="">Todas as categorias</option>
+                    <option value="Cardio">Cardio</option>
+                    <option value="Força">Força</option>
+                    <option value="Flexibilidade">Flexibilidade</option>
+                    <option value="Esporte">Esporte</option>
+                    <option value="Aquático">Aquático</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="buscarAtividade" class="form-label">Buscar Atividade:</label>
+                <input type="text" id="buscarAtividade" class="form-control" 
+                       placeholder="Digite o nome da atividade..." 
+                       onkeyup="filtrarAtividades()">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Atividades -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Atividades Cadastradas</h5>
+        <span class="badge bg-primary" id="contadorAtividades">0 atividades</span>
+    </div>
+    <div class="card-body">
+        <div id="listaAtividades">
+            <div class="text-center py-4">
+                <div class="spinner-border" role="status"></div>
+                <p class="mt-2">Carregando atividades...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Criar/Editar Atividade -->
+<div class="modal fade" id="modalAtividade" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAtividadeTitulo">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Nova Atividade
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formAtividade">
+                    <input type="hidden" id="atividadeId">
+                    
+                    <div class="mb-3">
+                        <label for="nomeAtividade" class="form-label">Nome da Atividade *</label>
+                        <input type="text" class="form-control" id="nomeAtividade" 
+                               placeholder="Ex: Corrida, Natação, Musculação..." required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="categoriaAtividade" class="form-label">Categoria *</label>
+                        <select class="form-select" id="categoriaAtividade" required>
+                            <option value="">Selecione uma categoria</option>
+                            <option value="Cardio">Cardio</option>
+                            <option value="Força">Força</option>
+                            <option value="Flexibilidade">Flexibilidade</option>
+                            <option value="Esporte">Esporte</option>
+                            <option value="Aquático">Aquático</option>
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="descricaoAtividade" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="descricaoAtividade" rows="3" 
+                                  placeholder="Descreva a atividade (opcional)..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarAtividade()">
+                    <i class="bi bi-check-lg me-2"></i>
+                    <span id="btnSalvarTexto">Salvar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="modalConfirmarExclusao" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir a atividade <strong id="nomeAtividadeExcluir"></strong>?</p>
+                <p class="text-muted small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Esta ação também excluirá todas as sessões relacionadas a esta atividade.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmarExclusao()">
+                    <i class="bi bi-trash me-2"></i>
+                    Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let atividades = [];
+let atividadeParaExcluir = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    carregarAtividades();
+    
+    // Reset form when modal is hidden
+    document.getElementById('modalAtividade').addEventListener('hidden.bs.modal', function() {
+        resetarFormulario();
+    });
+});
+
+async function carregarAtividades() {
+    try {
+        const response = await fetch('/api/atividades');
+        atividades = await response.json();
+        renderizarAtividades(atividades);
+        atualizarContador(atividades.length);
+    } catch (error) {
+        console.error('Erro ao carregar atividades:', error);
+        showToast('Erro ao carregar atividades', 'error');
+    }
+}
+
+function renderizarAtividades(atividadesParaRenderizar) {
+    const container = document.getElementById('listaAtividades');
+    
+    if (atividadesParaRenderizar.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fa-3x text-muted d-block mb-3"></i>
+                <h5 class="text-muted">Nenhuma atividade encontrada</h5>
+                <p class="text-muted">Comece criando sua primeira atividade!</p>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAtividade">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Criar Atividade
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = atividadesParaRenderizar.map(atividade => `
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="card-title mb-1">
+                            ${atividade.nome}
+                            <span class="badge bg-secondary ms-2">${atividade.categoria}</span>
+                        </h5>
+                        <p class="card-text text-muted mb-2">
+                            ${atividade.descricao || 'Sem descrição'}
+                        </p>
+                        <small class="text-muted">
+                            <i class="bi bi-calendar-plus me-1"></i>
+                            Criado em: ${new Date(atividade.criado_em).toLocaleDateString('pt-BR')}
+                        </small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-primary btn-sm" 
+                                    onclick="editarAtividade(${atividade.id})"
+                                    title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" 
+                                    onclick="prepararExclusao(${atividade.id}, '${atividade.nome}')"
+                                    title="Excluir">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function filtrarAtividades() {
+    const categoria = document.getElementById('filtroCategoria').value.toLowerCase();
+    const busca = document.getElementById('buscarAtividade').value.toLowerCase();
+    
+    const atividadesFiltradas = atividades.filter(atividade => {
+        const matchCategoria = !categoria || atividade.categoria.toLowerCase() === categoria;
+        const matchBusca = !busca || atividade.nome.toLowerCase().includes(busca);
+        return matchCategoria && matchBusca;
+    });
+    
+    renderizarAtividades(atividadesFiltradas);
+    atualizarContador(atividadesFiltradas.length);
+}
+
+function atualizarContador(count) {
+    document.getElementById('contadorAtividades').textContent = 
+        `${count} ${count === 1 ? 'atividade' : 'atividades'}`;
+}
+
+async function salvarAtividade() {
+    const id = document.getElementById('atividadeId').value;
+    const nome = document.getElementById('nomeAtividade').value.trim();
+    const categoria = document.getElementById('categoriaAtividade').value;
+    const descricao = document.getElementById('descricaoAtividade').value.trim();
+    
+    // Validação
+    if (!nome || !categoria) {
+        showToast('Preencha todos os campos obrigatórios', 'error');
+        return;
+    }
+    
+    const dados = { nome, categoria, descricao };
+    
+    try {
+        const response = await fetch('/api/atividades', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dados)
+        });
+        
+        if (response.ok) {
+            showToast('Atividade salva com sucesso!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalAtividade')).hide();
+            carregarAtividades();
+        } else {
+            const error = await response.json();
+            showToast(error.detail || 'Erro ao salvar atividade', 'error');
+        }
+    } catch (error) {
+        console.error('Erro ao salvar atividade:', error);
+        showToast('Erro ao salvar atividade', 'error');
+    }
+}
+
+function editarAtividade(id) {
+    const atividade = atividades.find(a => a.id === id);
+    if (!atividade) return;
+    
+    document.getElementById('atividadeId').value = atividade.id;
+    document.getElementById('nomeAtividade').value = atividade.nome;
+    document.getElementById('categoriaAtividade').value = atividade.categoria;
+    document.getElementById('descricaoAtividade').value = atividade.descricao || '';
+    
+    document.getElementById('modalAtividadeTitulo').innerHTML = `
+        <i class="bi bi-pencil me-2"></i>
+        Editar Atividade
+    `;
+    document.getElementById('btnSalvarTexto').textContent = 'Atualizar';
+    
+    new bootstrap.Modal(document.getElementById('modalAtividade')).show();
+}
+
+function prepararExclusao(id, nome) {
+    atividadeParaExcluir = id;
+    document.getElementById('nomeAtividadeExcluir').textContent = nome;
+    new bootstrap.Modal(document.getElementById('modalConfirmarExclusao')).show();
+}
+
+async function confirmarExclusao() {
+    if (!atividadeParaExcluir) return;
+    
+    try {
+        const response = await fetch(`/api/atividades/${atividadeParaExcluir}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            showToast('Atividade excluída com sucesso!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalConfirmarExclusao')).hide();
+            carregarAtividades();
+        } else {
+            const error = await response.json();
+            showToast(error.detail || 'Erro ao excluir atividade', 'error');
+        }
+    } catch (error) {
+        console.error('Erro ao excluir atividade:', error);
+        showToast('Erro ao excluir atividade', 'error');
+    }
+    
+    atividadeParaExcluir = null;
+}
+
+function resetarFormulario() {
+    document.getElementById('formAtividade').reset();
+    document.getElementById('atividadeId').value = '';
+    document.getElementById('modalAtividadeTitulo').innerHTML = `
+        <i class="bi bi-plus-circle me-2"></i>
+        Nova Atividade
+    `;
+    document.getElementById('btnSalvarTexto').textContent = 'Salvar';
+    
+    // Remove validation classes
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+}
+</script>
+{% endblock %}
