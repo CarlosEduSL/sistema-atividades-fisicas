@@ -1,6 +1,8 @@
 # Sistema de Monitoramento de Atividades Físicas
 ## Projeto V2 - FastAPI + Uvicorn + SQLAlchemy + SQLite
 
+[![Deploy on Render](https://img.shields.io/badge/Render-Deployed-46b946?logo=render&style=for-the-badge)](https://sistema-atividades-fisicas.onrender.com/atividades/)
+
 ### 📋 Descrição do Projeto
 Sistema web completo para registro e monitoramento de atividades físicas, desenvolvido com FastAPI, Uvicorn, SQLAlchemy e SQLite. Atende aos requisitos da V2 com API RESTful, banco de dados persistente, interface web e deploy em PaaS.
 
